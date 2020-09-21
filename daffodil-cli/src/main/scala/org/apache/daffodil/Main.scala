@@ -25,19 +25,14 @@ import java.nio.channels.Channels
 import java.nio.file.Paths
 import java.util.Scanner
 
-import scala.xml.{SAXParseException, Node}
+import scala.xml.{Node, SAXParseException}
 import org.rogach.scallop
-import org.apache.daffodil.debugger.{InteractiveDebugger, CLIDebuggerRunner, TraceDebuggerRunner}
-import org.apache.daffodil.util.Misc
-import org.apache.daffodil.util.Timer
+import org.apache.daffodil.debugger.{CLIDebuggerRunner, InteractiveDebugger, TraceDebuggerRunner}
+import org.apache.daffodil.util.{LogLevel, LogWriter, Logging, LoggingDefaults, Misc, Timer, Validators}
 import org.apache.daffodil.xml._
 import org.apache.daffodil.exceptions.Assert
 import org.apache.daffodil.compiler.Compiler
-import org.apache.daffodil.api.{WithDiagnostics, URISchemaSource, DFDL, DaffodilTunables}
-import org.apache.daffodil.util.Logging
-import org.apache.daffodil.util.LogLevel
-import org.apache.daffodil.util.LogWriter
-import org.apache.daffodil.util.LoggingDefaults
+import org.apache.daffodil.api.{DFDL, DaffodilTunables, URISchemaSource, WithDiagnostics}
 import org.apache.daffodil.exceptions.NotYetImplementedException
 import java.io.File
 
