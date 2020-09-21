@@ -21,6 +21,8 @@ import javax.xml.transform.stream.StreamSource
 import javax.xml.XMLConstants
 import scala.xml.parsing.NoBindingFactoryAdapter
 import java.net.URI
+
+import org.apache.daffodil.api.{HasSchemaFiles, Validator}
 import org.apache.daffodil.xml.DFDLCatalogResolver
 import scala.collection.mutable
 import org.xml.sax.ErrorHandler
@@ -30,7 +32,7 @@ import org.xml.sax.ErrorHandler
  * to do a validation pass on the TDML expected Infoset w.r.t. the model and to
  * do a validation pass on the actual result w.r.t. the model as an XML document.
  */
-object Validator extends NoBindingFactoryAdapter {
+object DefaultValidator extends NoBindingFactoryAdapter {
 
   private type CacheType = mutable.HashMap[Seq[String], javax.xml.validation.Validator]
 
@@ -87,3 +89,14 @@ object Validator extends NoBindingFactoryAdapter {
   }
 }
 
+// an spi-able proxy for the the default validator object
+class DefaultValidatorSPIProvider extends Validator with HasSchemaFiles {
+  private var schemaFileNames = Seq.empty[String]
+
+  override def name(): String = "default"
+
+  def schemaFileNames(fileNames: Seq[String]): Unit = schemaFileNames = fileNames
+
+  def validateXMLSources(document: java.io.InputStream, errHandler: ErrorHandler): Unit =
+    DefaultValidator.validateXMLSources(schemaFileNames, document, errHandler)
+}

@@ -27,19 +27,15 @@ import java.nio.file.Files
 import java.util.zip.GZIPOutputStream
 
 import scala.collection.immutable.Queue
-
 import org.xml.sax.ErrorHandler
 import org.xml.sax.SAXException
 import org.xml.sax.SAXParseException
-
-import org.apache.daffodil.api.DFDL
-import org.apache.daffodil.api.DaffodilTunables
-import org.apache.daffodil.api.ValidationMode
-import org.apache.daffodil.api.WithDiagnostics
+import org.apache.daffodil.api.{DFDL, DaffodilTunables, HasSchemaFiles, ValidationMode, WithDiagnostics}
 import org.apache.daffodil.debugger.Debugger
 import org.apache.daffodil.dsom.TunableLimitExceededError
 import org.apache.daffodil.dsom._
-import org.apache.daffodil.equality._; object EqualityNoWarn3 { EqualitySuppressUnusedImportWarning() }
+import org.apache.daffodil.equality._
+import org.apache.daffodil.util.Validators; object EqualityNoWarn3 { EqualitySuppressUnusedImportWarning() }
 import org.apache.daffodil.events.MultipleEventHandler
 import org.apache.daffodil.exceptions.Assert
 import org.apache.daffodil.exceptions.UnsuppressableException
@@ -67,7 +63,6 @@ import org.apache.daffodil.util.Logging
 import org.apache.daffodil.util.Maybe
 import org.apache.daffodil.util.Maybe._
 import org.apache.daffodil.util.Misc
-import org.apache.daffodil.util.Validator
 
 /**
  * Implementation mixin - provides simple helper methods
@@ -683,11 +678,22 @@ class ParseResult(dp: DataProcessor, override val resultState: PState)
    * @param state the initial parse state.
    */
   def validateResult(bytes: Array[Byte]): Unit = {
+    val impl = dp.validationMode match {
+      case ValidationMode.Custom(name) => Validators.get(name)
+      case _ => Some(Validators.default())
+    }
+
+    Assert.usage(impl.isDefined, "no validator impl found")
     Assert.usage(resultState.processorStatus eq Success)
-    val schemaURIStrings = resultState.infoset.asInstanceOf[InfosetElement].runtimeData.schemaURIStringsForFullValidation
+
+    for {
+      v@(x: HasSchemaFiles) <- impl
+      schemaURIStrings = resultState.infoset.asInstanceOf[InfosetElement].runtimeData.schemaURIStringsForFullValidation
+    } v.schemaFileNames(schemaURIStrings)
+
     try {
       val bis = new java.io.ByteArrayInputStream(bytes)
-      Validator.validateXMLSources(schemaURIStrings, bis, this)
+      impl.foreach(_.validateXMLSources(bis, this))
     } catch {
       //
       // Some SAX Parse errors are thrown even if you specify an error handler to the
