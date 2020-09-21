@@ -355,8 +355,16 @@ class CLIConf(arguments: Array[String]) extends scallop.ScallopConf(arguments)
       case _ => Right(Unit)
     }
 
-    validateOpt(parser, validate) {
-      case (Some(_), Some(v)) if v == ValidationMode.Full => Left("The validation mode must be 'limited' or 'off' when using a saved parser.")
+//    validateOpt(parser, validate) {
+//      case (Some(_), Some(v)) if v == ValidationMode.Full => Left("The validation mode must be 'limited' or 'off' when using a saved parser.")
+//      case _ => Right(Unit)
+//    }
+
+    validateOpt(validate) {
+      case (Some(ValidationMode.Custom(name))) =>
+        // todo;; determine whether we want to expose the qname here or just the human name
+        // initialize SPI and validate that we have a validator by the requested name
+        Left(s"Using validator $name.")
       case _ => Right(Unit)
     }
 
